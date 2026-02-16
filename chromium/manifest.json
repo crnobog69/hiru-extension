@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Hiru Quick Save",
+  "description": "Save current page to Hiru bookmark manager.",
+  "version": "0.1.0",
+  "permissions": ["storage", "tabs", "activeTab", "cookies"],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "action": {
+    "default_title": "Save to Hiru",
+    "default_popup": "popup.html"
+  }
+}

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hiru Quick Save</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main class="popup">
+      <header class="top">
+        <h1>Hiru Quick Save</h1>
+        <p>Save active tab directly to your Hiru account.</p>
+      </header>
+
+      <div class="row two">
+        <div>
+          <label class="label" for="serverSelect">Hiru Server</label>
+          <select id="serverSelect" class="input">
+            <option value="http://localhost:3000">Localhost (testing)</option>
+            <option value="https://hiru.crnbg.org">hiru.crnbg.org (production)</option>
+            <option value="custom">Custom URL</option>
+          </select>
+        </div>
+        <div>
+          <label class="label" for="themeSelect">Theme</label>
+          <select id="themeSelect" class="input">
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+            <option value="catppuccin">Mocha</option>
+            <option value="red-vintage">Red Vintage</option>
+          </select>
+        </div>
+      </div>
+
+      <input
+        id="customServer"
+        class="input hidden"
+        type="url"
+        placeholder="https://your-hiru.example.com"
+      />
+
+      <section class="card">
+        <div id="tabTitle" class="tab-title">Loading tab...</div>
+        <div id="tabUrl" class="tab-url"></div>
+      </section>
+
+      <div class="row two">
+        <div>
+          <label class="label" for="titleInput">Title</label>
+          <input id="titleInput" class="input" type="text" placeholder="Bookmark title" />
+        </div>
+        <div>
+          <label class="label" for="urlInput">URL</label>
+          <input id="urlInput" class="input" type="url" placeholder="https://example.com" />
+        </div>
+      </div>
+
+      <div>
+        <label class="label" for="collectionSelect">Folder</label>
+        <select id="collectionSelect" class="input">
+          <option value="">Unsorted</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="label" for="descriptionInput">Description</label>
+        <textarea id="descriptionInput" class="input textarea" maxlength="100" placeholder="Optional description (max 100)"></textarea>
+        <div id="descCounter" class="counter">0 / 100</div>
+      </div>
+
+      <div class="actions">
+        <button id="saveBtn" class="btn primary">Save Bookmark</button>
+        <button id="openBtn" class="btn">Open Hiru</button>
+      </div>
+
+      <div id="status" class="status" aria-live="polite"></div>
+
+      <footer class="hint">
+        If save fails with auth error, open selected Hiru server and sign in first.
+      </footer>
+    </main>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
