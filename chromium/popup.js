@@ -84,26 +84,115 @@ function fillCollections(collections) {
   const oldValue = collectionSelect.value;
   collectionSelect.innerHTML = "";
 
+  const iconLabels = {
+    folder: "📁",
+    inbox: "📥",
+    briefcase: "💼",
+    book: "📚",
+    code: "💻",
+    music: "🎵",
+    image: "🖼️",
+    film: "🎬",
+    star: "⭐",
+    heart: "❤️",
+    globe: "🌐",
+    coffee: "☕",
+    zap: "⚡",
+    gamepad2: "🎮",
+    bot: "🤖",
+    camera: "📷",
+    palette: "🎨",
+    monitor: "🖥️",
+    smartphone: "📱",
+    tv: "📺",
+    shield: "🛡️",
+    snowflake: "❄️",
+    ghost: "👻",
+    squirrel: "🐿️",
+    flame: "🔥",
+    sparkles: "✨",
+    rocket: "🚀",
+    graduationcap: "🎓",
+    trash: "🗑️",
+  };
+
+  function normalizeIconKey(value) {
+    const v = String(value || "")
+      .trim()
+      .replace(/^lucide[-:]/, "")
+      .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+    return v || "folder";
+  }
+
+  function iconPrefix(icon) {
+    const key = normalizeIconKey(icon);
+    return iconLabels[key] || "📁";
+  }
+
+  function bySortOrderThenName(a, b) {
+    const sa = Number.isFinite(Number(a.sortOrder)) ? Number(a.sortOrder) : 0;
+    const sb = Number.isFinite(Number(b.sortOrder)) ? Number(b.sortOrder) : 0;
+    if (sa !== sb) return sa - sb;
+    return String(a.name || "").localeCompare(String(b.name || ""));
+  }
+
+  function buildTree(items) {
+    const map = new Map();
+    const roots = [];
+    for (const item of items) {
+      map.set(item.id, { ...item, children: [] });
+    }
+    for (const item of items) {
+      const node = map.get(item.id);
+      if (item.parentId && map.has(item.parentId)) {
+        map.get(item.parentId).children.push(node);
+      } else {
+        roots.push(node);
+      }
+    }
+    const sortDeep = (nodes) => {
+      nodes.sort(bySortOrderThenName);
+      for (const n of nodes) sortDeep(n.children);
+    };
+    sortDeep(roots);
+    return roots;
+  }
+
+  function addNodeOption(node, depth) {
+    const opt = document.createElement("option");
+    const indent = depth > 0 ? `${"  ".repeat(depth)}↳ ` : "";
+    opt.value = node.id;
+    opt.textContent = `${indent}${iconPrefix(node.icon)} ${node.name}`;
+    collectionSelect.appendChild(opt);
+    for (const child of node.children) {
+      addNodeOption(child, depth + 1);
+    }
+  }
+
   const unsorted = collections.find((c) => c.isDefault);
-  const normal = collections.filter((c) => !c.isTrash && !c.isFavorites && !c.isDefault);
+  const normal = collections.filter(
+    (c) => !c.isTrash && !c.isFavorites && !c.isDefault
+  );
+  const roots = buildTree(normal);
 
   if (unsorted) {
     const opt = document.createElement("option");
     opt.value = unsorted.id;
-    opt.textContent = unsorted.name;
+    opt.textContent = `${iconPrefix(unsorted.icon || "inbox")} ${unsorted.name}`;
     collectionSelect.appendChild(opt);
   } else {
     const opt = document.createElement("option");
     opt.value = "";
-    opt.textContent = "Unsorted";
+    opt.textContent = "📥 Unsorted";
     collectionSelect.appendChild(opt);
   }
 
-  for (const c of normal) {
-    const opt = document.createElement("option");
-    opt.value = c.id;
-    opt.textContent = c.name;
-    collectionSelect.appendChild(opt);
+  for (const root of roots) {
+    addNodeOption(root, 0);
   }
 
   if (oldValue && Array.from(collectionSelect.options).some((o) => o.value === oldValue)) {
