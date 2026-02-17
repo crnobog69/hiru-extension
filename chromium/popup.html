@@ -3,33 +3,62 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Hiru Quick Save</title>
+    <title data-i18n="extensionName">Hiru Savior</title>
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
     <main class="popup">
       <header class="top">
-        <h1>Hiru Quick Save</h1>
-        <p>Save active tab directly to your Hiru account.</p>
+        <div class="top-row">
+          <div>
+            <h1 data-i18n="extensionName">Hiru Savior</h1>
+            <p data-i18n="popupSubtitle">Save active tab directly to your Hiru account.</p>
+          </div>
+          <button id="settingsToggleBtn" class="icon-btn" type="button" title="Settings" data-i18n-title="settingsTitle">
+            <span class="icon-btn-icon">
+              <i data-lucide="settings" aria-hidden="true"></i>
+            </span>
+          </button>
+        </div>
       </header>
 
-      <div class="row two">
-        <div>
-          <label class="label" for="serverSelect">Hiru Server</label>
-          <select id="serverSelect" class="input">
-            <option value="http://localhost:3000">Localhost (testing)</option>
-            <option value="https://hiru.crnbg.org">hiru.crnbg.org (production)</option>
-            <option value="custom">Custom URL</option>
-          </select>
+      <div id="settingsPanel" class="settings-panel hidden">
+        <div class="row two">
+          <div>
+            <label class="label" for="serverSelect" data-i18n="serverLabel">Hiru Server</label>
+            <select id="serverSelect" class="input">
+              <option value="http://localhost:3000" data-i18n="serverLocalhostTesting">Localhost (testing)</option>
+              <option value="https://hiru.crnbg.org" data-i18n="serverProduction">hiru.crnbg.org (production)</option>
+              <option value="custom" data-i18n="serverCustomUrl">Custom URL</option>
+            </select>
+          </div>
+          <div>
+            <label class="label" for="themeSelect" data-i18n="themeLabel">Theme</label>
+            <select id="themeSelect" class="input">
+              <option value="dark" data-i18n="themeDark">Dark</option>
+              <option value="light" data-i18n="themeLight">Light</option>
+              <option value="catppuccin" data-i18n="themeMocha">Mocha</option>
+              <option value="red-vintage" data-i18n="themeRedVintage">Red Vintage</option>
+            </select>
+          </div>
         </div>
-        <div>
-          <label class="label" for="themeSelect">Theme</label>
-          <select id="themeSelect" class="input">
-            <option value="dark">Dark</option>
-            <option value="light">Light</option>
-            <option value="catppuccin">Mocha</option>
-            <option value="red-vintage">Red Vintage</option>
-          </select>
+        <div class="row one">
+          <div>
+            <label class="label" for="languageSelect" data-i18n="languageLabel">Language</label>
+            <select id="languageSelect" class="input">
+              <option value="auto" data-i18n="languageAuto">Auto (browser)</option>
+              <option value="en" data-i18n="languageEnglish">English</option>
+              <option value="sr" data-i18n="languageSerbianLatin">Srpski (latinica)</option>
+              <option value="sr_Cyrl" data-i18n="languageSerbianCyrillic">Српски (ћирилица)</option>
+              <option value="ja" data-i18n="languageJapanese">日本語</option>
+              <option value="ja_Latn" data-i18n="languageJapaneseRomaji">Japanese (romaji)</option>
+              <option value="zh_CN" data-i18n="languageChineseChina">中文（中国）</option>
+              <option value="zh_TW" data-i18n="languageChineseTaiwan">中文（台灣）</option>
+              <option value="el" data-i18n="languageGreek">Ελληνικά</option>
+              <option value="ro" data-i18n="languageRomanian">Română</option>
+              <option value="ru" data-i18n="languageRussian">Русский</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -38,49 +67,71 @@
         class="input hidden"
         type="url"
         placeholder="https://your-hiru.example.com"
+        data-i18n-placeholder="customServerPlaceholder"
       />
 
       <section class="card">
-        <div id="tabTitle" class="tab-title">Loading tab...</div>
+        <div id="tabTitle" class="tab-title" data-i18n="loadingTab">Loading tab...</div>
         <div id="tabUrl" class="tab-url"></div>
       </section>
 
       <div class="row two">
         <div>
-          <label class="label" for="titleInput">Title</label>
-          <input id="titleInput" class="input" type="text" placeholder="Bookmark title" />
+          <label class="label" for="titleInput" data-i18n="titleLabel">Title</label>
+          <input id="titleInput" class="input" type="text" placeholder="Bookmark title" data-i18n-placeholder="titlePlaceholder" />
         </div>
         <div>
-          <label class="label" for="urlInput">URL</label>
+          <label class="label" for="urlInput" data-i18n="urlLabel">URL</label>
           <input id="urlInput" class="input" type="url" placeholder="https://example.com" />
         </div>
       </div>
 
       <div>
-        <label class="label" for="collectionSelect">Folder</label>
-        <select id="collectionSelect" class="input">
-          <option value="">Unsorted</option>
+        <label class="label" for="collectionSelect" data-i18n="folderLabel">Folder</label>
+        <div class="picker" id="collectionPicker">
+          <button id="collectionPickerBtn" class="picker-btn" type="button">
+            <span class="picker-btn-content">
+              <span class="picker-btn-icon">
+                <i data-lucide="inbox" aria-hidden="true"></i>
+              </span>
+              <span class="picker-btn-label" data-i18n="unsortedLabel">Unsorted</span>
+            </span>
+          </button>
+          <div id="collectionPickerMenu" class="picker-menu hidden">
+            <input
+              id="collectionSearch"
+              class="input picker-search"
+              type="text"
+              placeholder="Search folders..."
+              data-i18n-placeholder="searchFoldersPlaceholder"
+            />
+            <div id="collectionList" class="picker-list"></div>
+          </div>
+        </div>
+        <select id="collectionSelect" class="hidden">
+          <option value="" data-i18n="unsortedLabel">Unsorted</option>
         </select>
       </div>
 
       <div>
-        <label class="label" for="descriptionInput">Description</label>
-        <textarea id="descriptionInput" class="input textarea" maxlength="100" placeholder="Optional description (max 100)"></textarea>
+        <label class="label" for="descriptionInput" data-i18n="descriptionLabel">Description</label>
+        <textarea id="descriptionInput" class="input textarea" maxlength="100" placeholder="Optional description (max 100)" data-i18n-placeholder="descriptionPlaceholder"></textarea>
         <div id="descCounter" class="counter">0 / 100</div>
       </div>
 
       <div class="actions">
-        <button id="saveBtn" class="btn primary">Save Bookmark</button>
-        <button id="openBtn" class="btn">Open Hiru</button>
+        <button id="saveBtn" class="btn primary" data-i18n="saveBookmark">Save Bookmark</button>
+        <button id="openBtn" class="btn" data-i18n="openHiru">Open Hiru</button>
       </div>
 
       <div id="status" class="status" aria-live="polite"></div>
 
-      <footer class="hint">
+      <footer class="hint" data-i18n="authHint">
         If save fails with auth error, open selected Hiru server and sign in first.
       </footer>
     </main>
 
+    <script src="./vendor/lucide.min.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>
