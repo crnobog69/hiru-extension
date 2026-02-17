@@ -42,6 +42,7 @@ const statusEl = document.getElementById("status");
 let currentTab = null;
 let pickerItems = [];
 let lucideNameSet = null;
+let labIconNodeMap = null;
 let activeMessages = null;
 
 const ICON_ALIAS_MAP = {
@@ -156,6 +157,7 @@ function applyStaticI18n() {
 function normalizeIconKey(value) {
   const v = String(value || "")
     .trim()
+    .replace(/^i[-:]?lucide[-:]/, "")
     .replace(/^lucide[-:]/, "")
     .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
     .toLowerCase()
@@ -165,9 +167,29 @@ function normalizeIconKey(value) {
   return v || "folder";
 }
 
-function toLucideIcon(value) {
-  const key = normalizeIconKey(value);
-  const preferred = ICON_ALIAS_MAP[key] || key;
+function buildIconCandidates(value) {
+  const raw = normalizeIconKey(value);
+  const out = new Set();
+  const push = (candidate) => {
+    const normalized = normalizeIconKey(candidate);
+    if (normalized) out.add(normalized);
+  };
+
+  push(raw);
+  const compact = raw.replace(/-/g, "");
+  push(compact);
+
+  const splitDigits = compact
+    .replace(/([a-z])(\d)/g, "$1-$2")
+    .replace(/(\d)([a-z])/g, "$1-$2");
+  push(splitDigits);
+  push(splitDigits.replace(/(\d)-x-(\d)/g, "$1x$2"));
+  push(splitDigits.replace(/(\d)x(\d)/g, "$1-x-$2"));
+
+  return Array.from(out);
+}
+
+function ensureIconSets() {
   if (!lucideNameSet) {
     const icons = window?.lucide?.icons;
     lucideNameSet = new Set();
@@ -177,9 +199,111 @@ function toLucideIcon(value) {
       }
     }
   }
-  if (lucideNameSet.has(preferred)) return preferred;
-  if (lucideNameSet.has(key)) return key;
+
+  if (!labIconNodeMap) {
+    const raw = window?.__HIRU_LAB_ICONS__;
+    labIconNodeMap = new Map();
+    if (raw && typeof raw === "object") {
+      for (const [name, node] of Object.entries(raw)) {
+        const normalized = normalizeIconKey(name);
+        if (!normalized || !Array.isArray(node)) continue;
+        labIconNodeMap.set(normalized, node);
+      }
+    }
+  }
+}
+
+function toLucideIcon(value) {
+  const key = normalizeIconKey(value);
+  const preferred = ICON_ALIAS_MAP[key] || key;
+  ensureIconSets();
+  const candidates = [
+    ...buildIconCandidates(preferred),
+    ...buildIconCandidates(key),
+  ];
+  for (const candidate of candidates) {
+    if (lucideNameSet.has(candidate)) return candidate;
+    if (labIconNodeMap.has(candidate)) return candidate;
+  }
   return "folder";
+}
+
+function createLabIconSvg(name, iconNode, attrs = {}) {
+  const ns = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(ns, "svg");
+  const baseAttrs = {
+    xmlns: ns,
+    width: attrs.width || "14",
+    height: attrs.height || "14",
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    "stroke-width": attrs["stroke-width"] || "2",
+    "stroke-linecap": "round",
+    "stroke-linejoin": "round",
+    "aria-hidden": attrs["aria-hidden"] || "true",
+    "data-lucide": name,
+  };
+
+  const classNames = ["lucide", `lucide-${name}`];
+  if (attrs.class) classNames.push(attrs.class);
+  baseAttrs.class = classNames.join(" ").trim();
+
+  for (const [key, value] of Object.entries(baseAttrs)) {
+    if (value == null || value === "") continue;
+    svg.setAttribute(key, String(value));
+  }
+
+  for (const entry of iconNode) {
+    if (!Array.isArray(entry) || entry.length < 1) continue;
+    const [tagName, tagAttrs] = entry;
+    const child = document.createElementNS(ns, String(tagName));
+    if (tagAttrs && typeof tagAttrs === "object") {
+      for (const [key, value] of Object.entries(tagAttrs)) {
+        child.setAttribute(key, String(value));
+      }
+    }
+    svg.appendChild(child);
+  }
+
+  return svg;
+}
+
+function renderLabIcons() {
+  ensureIconSets();
+  if (!labIconNodeMap || labIconNodeMap.size === 0) return;
+
+  for (const iconEl of document.querySelectorAll("i[data-lucide]")) {
+    const rawName = iconEl.getAttribute("data-lucide");
+    if (!rawName) continue;
+
+    const candidates = buildIconCandidates(rawName);
+    let resolved = null;
+    for (const candidate of candidates) {
+      if (lucideNameSet.has(candidate)) {
+        resolved = null;
+        break;
+      }
+      if (labIconNodeMap.has(candidate)) {
+        resolved = candidate;
+        break;
+      }
+    }
+    if (!resolved) continue;
+
+    const node = labIconNodeMap.get(resolved);
+    if (!Array.isArray(node)) continue;
+
+    const attrs = {
+      width: iconEl.getAttribute("width") || undefined,
+      height: iconEl.getAttribute("height") || undefined,
+      "stroke-width": iconEl.getAttribute("stroke-width") || undefined,
+      class: iconEl.getAttribute("class") || undefined,
+      "aria-hidden": iconEl.getAttribute("aria-hidden") || undefined,
+    };
+    const svg = createLabIconSvg(resolved, node, attrs);
+    iconEl.replaceWith(svg);
+  }
 }
 
 function normalizeIconColor(value) {
@@ -192,6 +316,7 @@ function normalizeIconColor(value) {
 }
 
 function renderLucide() {
+  ensureIconSets();
   if (window.lucide && typeof window.lucide.createIcons === "function") {
     window.lucide.createIcons({
       attrs: {
@@ -201,6 +326,7 @@ function renderLucide() {
       },
     });
   }
+  renderLabIcons();
 }
 
 function normalizeServerUrl(value) {
